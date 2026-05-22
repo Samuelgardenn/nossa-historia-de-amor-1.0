@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // 2. Global authorization helper blocks
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == "samuel11jardim@gmail.com" && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    // 3. Validation blueprint for PaginaRomantica
+    function isValidPagina(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.criado_em is string &&
+             data.created_by is string &&
+             data.dados is map;
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Paginas Collection
+    match /paginas/{paginaId} {
+      // Direct link access is open (security via un-indexable obfuscated UUID)
+      allow get: if true;
+      
+      // Prevent bulk querying and list exposure to non-admins
+      allow list: if isAdmin();
+      
+      // Allow creation through verified client or backend
+      allow create: if isValidId(paginaId) && isValidPagina(request.resource.data) && (
+        isAdmin() || 
+        (isSignedIn() && request.resource.data.created_by == request.auth.uid) ||
+        request.resource.data.created_by == "server" ||
+        request.resource.data.created_by == "public"
+      );
+      
+      // Restrict modification and administrative cleanup exclusively to administrators
+      allow update: if isValidId(paginaId) && isValidPagina(request.resource.data) && (
+        isAdmin() && request.resource.data.id == resource.data.id
+      );
+      
+      allow delete: if isValidId(paginaId) && isAdmin();
+    }
+  }
+}

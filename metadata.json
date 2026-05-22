@@ -1,0 +1,6 @@
+{
+  "name": "Nossa História de Amor",
+  "description": "Uma aplicação móvel de presentes digitais românticos com linha do tempo de eventos, fotos polaroides e player de música.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
