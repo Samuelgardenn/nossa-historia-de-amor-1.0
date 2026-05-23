@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 // In-memory rate limiting cache
 const rateLimitCache = new Map<string, number[]>();
@@ -47,6 +46,10 @@ function sanitizeData(data: any): any {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isSupabaseConfigured || !supabase) {
+      return NextResponse.json({ error: 'Supabase não está configurado.' }, { status: 400 });
+    }
+
     // 1. Check Payload Size Limit (15MB)
     const contentLength = req.headers.get('content-length');
     if (contentLength && parseInt(contentLength, 10) > 15 * 1024 * 1024) {
@@ -76,17 +79,16 @@ export async function POST(req: NextRequest) {
 
     const dadosFinal = { ...sanitizedBody };
 
-    // 4. Connect and Save directly to Firestore collection 'paginas'
-    try {
-      const docPath = `paginas/${pageId}`;
-      await setDoc(doc(db, 'paginas', pageId), {
-        id: pageId,
-        dados: dadosFinal,
-        criado_em: new Date().toISOString(),
-        created_by: 'public'
-      });
-    } catch (fireError) {
-      handleFirestoreError(fireError, OperationType.CREATE, `paginas/${pageId}`);
+    // 4. Connect and Save directly to Supabase table 'paginas'
+    const { error } = await supabase.from('paginas').insert([{
+      id: pageId,
+      dados: dadosFinal,
+      criado_em: new Date().toISOString(),
+      created_by: 'public'
+    }]);
+
+    if (error) {
+      throw new Error(error.message);
     }
 
     return NextResponse.json({ id: pageId, success: true });

@@ -29,10 +29,28 @@ FOR INSERT
 TO public
 WITH CHECK (true);
 
--- Permitir atualização (UPDATE) - usado para renovar a senha a cada 10 min
+-- Permitir atualização (UPDATE) - usado para renovar a senha a cada 20 min
 CREATE POLICY "Permitir atualizacao anonima" 
 ON public.site_config 
 FOR UPDATE 
 TO public
 USING (true)
 WITH CHECK (true);
+
+-- 4. Criação da tabela paginas
+CREATE TABLE IF NOT EXISTS public.paginas (
+    id text PRIMARY KEY,
+    dados jsonb NOT NULL,
+    criado_em timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created_by text DEFAULT 'public'
+);
+
+-- 5. Habilitar RLS para paginas
+ALTER TABLE public.paginas ENABLE ROW LEVEL SECURITY;
+
+-- 6. Políticas de acesso para paginas
+CREATE POLICY "Permitir leitura anonima paginas" 
+ON public.paginas FOR SELECT TO public USING (true);
+
+CREATE POLICY "Permitir insercao anonima paginas" 
+ON public.paginas FOR INSERT TO public WITH CHECK (true);

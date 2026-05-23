@@ -43,9 +43,9 @@ export async function POST(req: Request) {
     const now = new Date();
     const updatedAt = new Date(config.updated_at);
     
-    // Check if 30 minutes have passed
-    const thirtyMinutesInMs = 30 * 60 * 1000;
-    const isExpired = now.getTime() - updatedAt.getTime() > thirtyMinutesInMs;
+    // Check if 20 minutes have passed
+    const twentyMinutesInMs = 20 * 60 * 1000;
+    const isExpired = now.getTime() - updatedAt.getTime() > twentyMinutesInMs;
 
     if (isExpired) {
       // Regenerate password and update Supabase

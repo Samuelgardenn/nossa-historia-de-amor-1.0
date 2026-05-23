@@ -133,22 +133,20 @@ export default function HomeBuilderPage() {
   }, [isUploading]);
 
   // Helper to downscale base64 images before saving
-  const compressBase64Local = (base64Str: string, quality = 0.5): Promise<string> => {
+  const compressBase64Local = (base64Str: string, quality = 0.5, maxWidth = 600, maxHeight = 600): Promise<string> => {
     return new Promise((resolve) => {
       if (!base64Str.startsWith('data:image/')) return resolve(base64Str); // Skip non-base64 or URLs
       
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 600;
-        const MAX_HEIGHT = 600;
         let width = img.width;
         let height = img.height;
 
         if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
         } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+          if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
         }
         canvas.width = width;
         canvas.height = height;
@@ -172,45 +170,62 @@ export default function HomeBuilderPage() {
     setLoadingStepText('Iniciando compressão e envio das recordações...');
 
     try {
-      // Create a copy of config to compress
-      const payloadToSave = { ...config };
-      
-      // Compress avatar
-      if (payloadToSave.fotoPerfil) {
-        payloadToSave.fotoPerfil = await compressBase64Local(payloadToSave.fotoPerfil, 0.5);
-      }
-      
-      // Compress polaroids
-      if (payloadToSave.polaroids) {
-        payloadToSave.polaroids = await Promise.all(payloadToSave.polaroids.map(async (pol) => ({
-          ...pol,
-          fotoUrl: await compressBase64Local(pol.fotoUrl, 0.5)
-        })));
-      }
-      
-      // Compress timeline
-      if (payloadToSave.linhaDoTempo) {
-        payloadToSave.linhaDoTempo = await Promise.all(payloadToSave.linhaDoTempo.map(async (time) => ({
-          ...time,
-          fotoUrl: time.fotoUrl ? await compressBase64Local(time.fotoUrl, 0.5) : undefined
-        })));
+      let compressionQuality = 0.5;
+      let maxDim = 600;
+      let payloadToSave: any;
+      let sizeInMB: string = '0';
+
+      // Iterative compression to guarantee it fits under 0.95 MB
+      for (let attempts = 0; attempts < 3; attempts++) {
+        payloadToSave = { ...config };
+        
+        // Compress avatar
+        if (payloadToSave.fotoPerfil) {
+          payloadToSave.fotoPerfil = await compressBase64Local(payloadToSave.fotoPerfil, compressionQuality, maxDim, maxDim);
+        }
+        
+        // Compress polaroids
+        if (payloadToSave.polaroids) {
+          payloadToSave.polaroids = await Promise.all(payloadToSave.polaroids.map(async (pol: any) => ({
+            ...pol,
+            fotoUrl: await compressBase64Local(pol.fotoUrl, compressionQuality, maxDim, maxDim)
+          })));
+        }
+        
+        // Compress timeline
+        if (payloadToSave.linhaDoTempo) {
+          payloadToSave.linhaDoTempo = await Promise.all(payloadToSave.linhaDoTempo.map(async (time: any) => ({
+            ...time,
+            fotoUrl: time.fotoUrl ? await compressBase64Local(time.fotoUrl, compressionQuality, maxDim, maxDim) : undefined
+          })));
+        }
+
+        // Check payload size roughly
+        const payloadString = JSON.stringify(payloadToSave);
+        sizeInMB = (new Blob([payloadString]).size / (1024 * 1024)).toFixed(2);
+        console.log(`Tentativa ${attempts + 1} - Tamanho do payload: ${sizeInMB} MB`);
+        
+        if (parseFloat(sizeInMB) <= 0.95) {
+          break; // It fits!
+        }
+        
+        // If it doesn't fit, reduce quality and dimensions for the next attempt
+        compressionQuality -= 0.15;
+        maxDim -= 150;
       }
 
-      // Check payload size roughly
-      const payloadString = JSON.stringify(payloadToSave);
-      const sizeInMB = (new Blob([payloadString]).size / (1024 * 1024)).toFixed(2);
-      console.log(`Tamanho do payload a ser salvo: ${sizeInMB} MB`);
-      
       if (parseFloat(sizeInMB) > 0.95) {
-        throw new Error('As fotos inseridas ainda estão muito grandes, por favor remova algumas ou tente com um número menor de fotos para não exceder o limite do banco de dados (Max 1MB).');
+        throw new Error('As fotos inseridas ainda estão muito grandes mesmo após forte compressão. Por favor, remova algumas ou tente com um número menor de fotos para não exceder o limite do banco de dados (Max 1MB).');
       }
+
+      const payloadStringFinal = JSON.stringify(payloadToSave);
 
       const response = await fetch('/api/criar-pagina', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: payloadString
+        body: payloadStringFinal
       });
 
       const data = await response.json();
