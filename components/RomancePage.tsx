@@ -6,6 +6,7 @@ import {
   Heart, Calendar, Camera, Trash2, Plus, Edit2, Sparkles, Copy, 
   Share2, Volume2, Play, Pause, Clock, Mail, Info, Music, Code, Compass, ArrowRight, RotateCcw
 } from 'lucide-react';
+import ImageCropperModal from './ImageCropperModal';
 
 // Color themes configuration
 export type RomanceTheme = 'pink-blush' | 'vintage-rose' | 'sunset-warmth' | 'crimson-heart' | 'cosmic-slate' | 'sophisticated-dark';
@@ -125,6 +126,19 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
   const [aiTone, setAiTone] = React.useState('apaixonado');
   const [aiMemories, setAiMemories] = React.useState('');
   const [aiError, setAiError] = React.useState('');
+
+  // Cropper States
+  const [cropperState, setCropperState] = React.useState<{
+    isOpen: boolean;
+    imageSrc: string;
+    aspectRatio: number;
+    targetSetter: ((base64: string) => void) | null;
+  }>({
+    isOpen: false,
+    imageSrc: '',
+    aspectRatio: 1,
+    targetSetter: null
+  });
 
   const updateConfig = (patchedFields: Partial<LovePageConfig>) => {
     if (onChange) {
@@ -341,7 +355,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
   const currentTheme = getThemeClasses();
 
   // Handle local picture convert to base64 helper with compression
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (base64: string) => void) => {
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, aspectRatio: number, setter: (base64: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -352,45 +366,14 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          // Compress into a very lightweight JPEG format to avoid Firestore 1MB limits
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-          setter(compressedBase64);
-        } else {
-          // Fallback just in case
-          if (typeof event.target?.result === 'string') {
-            setter(event.target.result);
-          }
-        }
-      };
-      
       if (typeof event.target?.result === 'string') {
-        img.src = event.target.result;
+        // Open Cropper Modal
+        setCropperState({
+          isOpen: true,
+          imageSrc: event.target.result,
+          aspectRatio,
+          targetSetter: setter
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -587,7 +570,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handlePhotoUpload(e, (base64) => updateConfig({ fotoPerfil: base64 }))}
+                    onChange={(e) => handlePhotoUpload(e, 1, (base64) => updateConfig({ fotoPerfil: base64 }))}
                     className="hidden"
                   />
                 </label>
@@ -974,7 +957,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                         type="file"
                         accept="image/*"
                         className="absolute inset-0 opacity-0 cursor-pointer"
-                        onChange={(e) => handlePhotoUpload(e, setNewPolaroidBase64)}
+                        onChange={(e) => handlePhotoUpload(e, 3/4, setNewPolaroidBase64)}
                       />
                     </>
                   )}
@@ -1165,7 +1148,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                           type="file"
                           accept="image/*"
                           className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => handlePhotoUpload(e, setNewTimelineBase64)}
+                          onChange={(e) => handlePhotoUpload(e, 1, setNewTimelineBase64)}
                         />
                       </>
                     )}
@@ -1405,6 +1388,19 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
         </div>
 
       </div>
+
+      <ImageCropperModal
+        isOpen={cropperState.isOpen}
+        imageSrc={cropperState.imageSrc}
+        aspectRatio={cropperState.aspectRatio}
+        tema={config.tema}
+        onClose={() => setCropperState({ ...cropperState, isOpen: false, imageSrc: '' })}
+        onCropComplete={(croppedBase64) => {
+          if (cropperState.targetSetter) {
+            cropperState.targetSetter(croppedBase64);
+          }
+        }}
+      />
     </div>
   );
 }
