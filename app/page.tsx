@@ -326,7 +326,10 @@ export default function HomeBuilderPage() {
           whileTap={{ scale: 0.96 }}
           className={`flex items-center gap-2 px-8 py-4 text-white text-base font-bold rounded-full shadow-lg cursor-pointer bg-gradient-to-r transition-all animate-bounce ${currentThemeHexColor()}`}
         >
-          <Sparkles className="w-5 h-5 animate-pulse" /> 💳 Eternizar por R$ 29,90
+          <Sparkles className="w-5 h-5 animate-pulse" />
+          <span>💳 Eternizar: </span>
+          <span className="line-through text-white/65 text-sm">R$ 29,90</span>
+          <span className="font-extrabold text-amber-300 ml-1">R$ 19,90</span>
         </motion.button>
       </div>
 
@@ -379,10 +382,10 @@ export default function HomeBuilderPage() {
                   <div>
                     <span className={`text-xs font-bold block ${
                       config.tema === 'sophisticated-dark' ? 'text-[#D48C70]' : 'text-rose-600'
-                    }`}>Pagamento Seguro via Stripe</span>
+                    }`}>Pagamento Seguro via Mercado Pago</span>
                     <span className={`text-[10px] block ${
                       config.tema === 'sophisticated-dark' ? 'text-[#EAD7D1]/50' : 'text-slate-400'
-                    }`}>R$ 29,90 • Cartão de crédito ou boleto • Criptografia SSL</span>
+                    }`}>De <span className="line-through">R$ 29,90</span> por apenas R$ 19,90 • Cartão de crédito, PIX ou boleto • Criptografia SSL</span>
                   </div>
                 </div>
 

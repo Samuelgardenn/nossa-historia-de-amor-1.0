@@ -66,7 +66,7 @@ export async function POST(request: Request) {
             title: '💕 Página de Amor Permanente',
             description: 'Sua história de amor eternizada em uma página exclusiva e permanente na web.',
             quantity: 1,
-            unit_price: 29.90,
+            unit_price: 19.90,
             currency_id: 'BRL',
             picture_url: 'https://img.icons8.com/emoji/96/red-heart.png'
           }

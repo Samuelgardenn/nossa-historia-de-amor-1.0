@@ -445,11 +445,11 @@ export default function AdminDashboardPage() {
           </div>
           <div className="bg-neutral-900/60 border border-neutral-800/60 p-5 rounded-2xl">
             <span className="text-[10px] uppercase font-bold tracking-wider text-rose-455">Faturamento Manual Estimado</span>
-            <p className="text-3xl font-extrabold text-white mt-1 font-mono">R$ {(pages.length * 29.90).toFixed(2)}</p>
+            <p className="text-3xl font-extrabold text-white mt-1 font-mono">R$ {(pages.length * 19.90).toFixed(2)}</p>
           </div>
           <div className="bg-neutral-900/60 border border-neutral-800/60 p-5 rounded-2xl">
             <span className="text-[10px] uppercase font-bold tracking-wider text-amber-500">Valor de Venda Recomendado</span>
-            <p className="text-3xl font-extrabold text-amber-400 mt-1 font-mono">R$ 29,90/und</p>
+            <p className="text-3xl font-extrabold text-amber-400 mt-1 font-mono">R$ 19,90/und</p>
           </div>
         </div>
 
