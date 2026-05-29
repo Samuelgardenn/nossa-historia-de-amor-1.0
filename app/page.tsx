@@ -163,11 +163,11 @@ export default function HomeBuilderPage() {
     });
   };
 
-  // Trigger eternalization save POST on endpoint
+  // Trigger pagamento seguro via Stripe Checkout
   const handleEternalize = async () => {
     setShowConfirmModal(false);
     setIsUploading(true);
-    setLoadingStepText('Iniciando compressão e envio das recordações...');
+    setLoadingStepText('Preparando seu pagamento seguro...');
 
     try {
       let compressionQuality = 0.5;
@@ -175,16 +175,16 @@ export default function HomeBuilderPage() {
       let payloadToSave: any;
       let sizeInMB: string = '0';
 
-      // Iterative compression to guarantee it fits under 0.95 MB
+      // Compressão iterativa para caber no limite do banco
       for (let attempts = 0; attempts < 3; attempts++) {
         payloadToSave = { ...config };
         
-        // Compress avatar
+        // Comprimir avatar
         if (payloadToSave.fotoPerfil) {
           payloadToSave.fotoPerfil = await compressBase64Local(payloadToSave.fotoPerfil, compressionQuality, maxDim, maxDim);
         }
         
-        // Compress polaroids
+        // Comprimir polaroids
         if (payloadToSave.polaroids) {
           payloadToSave.polaroids = await Promise.all(payloadToSave.polaroids.map(async (pol: any) => ({
             ...pol,
@@ -192,7 +192,7 @@ export default function HomeBuilderPage() {
           })));
         }
         
-        // Compress timeline
+        // Comprimir linha do tempo
         if (payloadToSave.linhaDoTempo) {
           payloadToSave.linhaDoTempo = await Promise.all(payloadToSave.linhaDoTempo.map(async (time: any) => ({
             ...time,
@@ -200,16 +200,14 @@ export default function HomeBuilderPage() {
           })));
         }
 
-        // Check payload size roughly
         const payloadString = JSON.stringify(payloadToSave);
         sizeInMB = (new Blob([payloadString]).size / (1024 * 1024)).toFixed(2);
         console.log(`Tentativa ${attempts + 1} - Tamanho do payload: ${sizeInMB} MB`);
         
         if (parseFloat(sizeInMB) <= 0.95) {
-          break; // It fits!
+          break;
         }
         
-        // If it doesn't fit, reduce quality and dimensions for the next attempt
         compressionQuality -= 0.15;
         maxDim -= 150;
       }
@@ -218,25 +216,26 @@ export default function HomeBuilderPage() {
         throw new Error('As fotos inseridas ainda estão muito grandes mesmo após forte compressão. Por favor, remova algumas ou tente com um número menor de fotos para não exceder o limite do banco de dados (Max 1MB).');
       }
 
-      const payloadStringFinal = JSON.stringify(payloadToSave);
+      setLoadingStepText('Redirecionando para pagamento seguro...');
 
-      const response = await fetch('/api/criar-pagina', {
+      // Criar sessão de checkout no Stripe via API
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: payloadStringFinal
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageConfig: payloadToSave }),
       });
 
       const data = await response.json();
-      if (data.id) {
-        setGeneratedPageId(data.id);
+      
+      if (data.url) {
+        // Redirecionar para o Stripe Checkout
+        window.location.href = data.url;
+        return; // Não desligar o loading, pois o navegador está redirecionando
       } else {
-        throw new Error(data.error || 'Erro inesperado.');
+        throw new Error(data.error || 'Erro ao criar sessão de pagamento.');
       }
     } catch (err: any) {
-      alert(`Ops! Não conseguimos eternizar agora. Ocorreu o erro: ${err?.message || 'Tente novamente.'}`);
-    } finally {
+      alert(`Ops! Não conseguimos processar agora. ${err?.message || 'Tente novamente.'}`);
       setIsUploading(false);
     }
   };
@@ -282,10 +281,12 @@ export default function HomeBuilderPage() {
         title: `Eternizamos Nosso Amor 💕`,
         text: `Veja nossa história permanente e fotos na caixinha de recordações online!`,
         url: link,
-      }).catch(e => console.log('Share canceled', e));
+      }).catch(e => console.log('Compartilhamento cancelado', e));
     } else {
-      // Fallback open whatsapp link
-      window.open(`https://api.whatsapp.com/send?text=Veja o nosso cantinho permanente de amor! 💕 ${encodeURIComponent(link)}`, '_blank');
+      // Fallback: copiar link para a área de transferência
+      navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -326,7 +327,7 @@ export default function HomeBuilderPage() {
           whileTap={{ scale: 0.96 }}
           className={`flex items-center gap-2 px-8 py-4 text-white text-base font-bold rounded-full shadow-lg cursor-pointer bg-gradient-to-r transition-all animate-bounce ${currentThemeHexColor()}`}
         >
-          <Sparkles className="w-5 h-5 animate-pulse" /> ✨ Criar Minha Página Permanente!
+          <Sparkles className="w-5 h-5 animate-pulse" /> 💳 Eternizar por R$ 29,90
         </motion.button>
       </div>
 
@@ -364,12 +365,27 @@ export default function HomeBuilderPage() {
                 }`}>
                   Tudo pronto para eternizar?
                 </h3>
-                <p className={`text-sm leading-relaxed mb-6 ${
+                <p className={`text-sm leading-relaxed mb-4 ${
                   config.tema === 'sophisticated-dark' ? 'text-[#EAD7D1]/70' : 'text-slate-500'
                 }`}>
-                  Sua caixinha de memórias atual será guardada com segurança em nosso banco de dados. 
-                  Você receberá um <strong>link exclusivo e permanente</strong> para compartilhar com seu amor e guardar para sempre em seu navegador!
+                  Sua caixinha de memórias será guardada com segurança após o pagamento.
+                  Você receberá um <strong>link exclusivo e permanente</strong> para compartilhar com seu amor!
                 </p>
+                <div className={`p-3 rounded-xl mb-4 flex items-center gap-3 text-left border ${
+                  config.tema === 'sophisticated-dark'
+                    ? 'bg-[#0F0A0A] border-[#2A1E1E]'
+                    : 'bg-slate-50 border-slate-100'
+                }`}>
+                  <div className="text-2xl">🔒</div>
+                  <div>
+                    <span className={`text-xs font-bold block ${
+                      config.tema === 'sophisticated-dark' ? 'text-[#D48C70]' : 'text-rose-600'
+                    }`}>Pagamento Seguro via Stripe</span>
+                    <span className={`text-[10px] block ${
+                      config.tema === 'sophisticated-dark' ? 'text-[#EAD7D1]/50' : 'text-slate-400'
+                    }`}>R$ 29,90 • Cartão de crédito ou boleto • Criptografia SSL</span>
+                  </div>
+                </div>
 
                 <div className="flex flex-col gap-2.5">
                   <button
@@ -380,7 +396,7 @@ export default function HomeBuilderPage() {
                         : 'bg-rose-500 hover:bg-rose-600 text-white'
                     }`}
                   >
-                    Sim, criar nossa página! 🌹
+                    💳 Pagar e Criar Nossa Página! 🌹
                   </button>
                   <button
                     onClick={() => setShowConfirmModal(false)}

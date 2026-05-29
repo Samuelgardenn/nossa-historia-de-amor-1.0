@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-// In-memory rate limiting cache
 const rateLimitCache = new Map<string, number[]>();
 
 function checkRateLimit(ip: string): boolean {
@@ -9,15 +8,13 @@ function checkRateLimit(ip: string): boolean {
   const oneHour = 60 * 60 * 1000;
   const timestamps = rateLimitCache.get(ip) || [];
   
-  // Filter timestamps from the last hour
   const recent = timestamps.filter(t => now - t < oneHour);
   recent.push(now);
   rateLimitCache.set(ip, recent);
   
-  return recent.length <= 15; // Increased allowance slightly for convenient client testing
+  return recent.length <= 15;
 }
 
-// XSS Sanitizer
 function sanitizeString(str: string): string {
   return str
     .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '')
@@ -32,12 +29,10 @@ function sanitizeData(data: any): any {
   if (Array.isArray(data)) {
     return data.map(item => sanitizeData(item));
   }
-  if (data !== null && typeof data === 'object') {
-    const sanitized: any = {};
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        sanitized[key] = sanitizeData(data[key]);
-      }
+  if (data && typeof data === 'object') {
+    const sanitized: Record<string, any> = {};
+    for (const key of Object.keys(data)) {
+      sanitized[key] = sanitizeData(data[key]);
     }
     return sanitized;
   }
@@ -47,10 +42,9 @@ function sanitizeData(data: any): any {
 export async function POST(req: NextRequest) {
   try {
     if (!isSupabaseConfigured || !supabase) {
-      return NextResponse.json({ error: 'Supabase não está configurado.' }, { status: 400 });
+      return NextResponse.json({ error: 'Supabase não configurado.' }, { status: 400 });
     }
 
-    // 1. Check Payload Size Limit (15MB)
     const contentLength = req.headers.get('content-length');
     if (contentLength && parseInt(contentLength, 10) > 15 * 1024 * 1024) {
       return NextResponse.json(
@@ -59,43 +53,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. IP Rate Limiting
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
-        { error: 'Muitas requisições. Você pode criar até 15 páginas por hora.' },
+        { error: 'Limite de requisições excedido. Tente novamente mais tarde.' },
         { status: 429 }
       );
     }
 
-    // 3. Read Body & Sanitization
     const rawBody = await req.json();
     const sanitizedBody = sanitizeData(rawBody);
+    
+    // Páginas criadas via API direta (como o painel admin) são marcadas como pagas/ativas
+    sanitizedBody.pago = true;
+    sanitizedBody.status = 'ativo';
 
-    // Generate pageId (UUID)
-    const pageId = typeof crypto?.randomUUID === 'function' 
-      ? crypto.randomUUID() 
-      : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    const pageId = crypto.randomUUID();
 
-    const dadosFinal = { ...sanitizedBody };
-
-    // 4. Connect and Save directly to Supabase table 'paginas'
     const { error } = await supabase.from('paginas').insert([{
       id: pageId,
-      dados: dadosFinal,
+      dados: sanitizedBody,
       criado_em: new Date().toISOString(),
       created_by: 'public'
     }]);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) throw error;
 
     return NextResponse.json({ id: pageId, success: true });
   } catch (err: any) {
     console.error('Error creating romantic page:', err);
     return NextResponse.json(
-      { error: err?.message || 'Ocorreu um erro ao criar a página.' },
+      { error: err.message || 'Erro ao criar página.' },
       { status: 500 }
     );
   }

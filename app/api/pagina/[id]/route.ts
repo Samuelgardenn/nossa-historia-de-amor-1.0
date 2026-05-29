@@ -23,6 +23,14 @@ export async function GET(
       return NextResponse.json({ error: 'Página romântica não encontrada.' }, { status: 404 });
     }
 
+    // Verificar status do pagamento
+    if (data.dados && data.dados.pago === false) {
+      return NextResponse.json(
+        { error: 'O pagamento desta página ainda está pendente de confirmação.' },
+        { status: 402 }
+      );
+    }
+
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('Error fetching page:', err);

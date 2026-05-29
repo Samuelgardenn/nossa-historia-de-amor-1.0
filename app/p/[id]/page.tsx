@@ -21,6 +21,8 @@ export default function PermanentRomancePage({ params }: { params: Promise<{ id:
         if (!res.ok) {
           if (res.status === 404) {
             setErrorString('Esta página romântica ainda não foi escrita nos astros...');
+          } else if (res.status === 402) {
+            setErrorString('O pagamento desta página ainda está pendente de confirmação...');
           } else {
             setErrorString('Ops, tivemos dificuldade para carregar a caixinha de memórias.');
           }

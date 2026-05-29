@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Heart, Shield, Plus, Settings, Trash2, Edit, Copy, ExternalLink, 
+import {
+  Heart, Shield, Plus, Settings, Trash2, Edit, Copy, ExternalLink,
   Sparkles, Check, LogOut, ArrowRight, Music, Calendar, ChevronRight, RefreshCw, Layers
 } from 'lucide-react';
 import { LovePageConfig, RomanceTheme } from '@/components/RomancePage';
@@ -97,18 +97,18 @@ export default function AdminDashboardPage() {
   const [passcode, setPasscode] = React.useState('');
   const [isAuthorized, setIsAuthorized] = React.useState(false);
   const [authError, setAuthError] = React.useState('');
-  
+
   // Dashboard states
   const [pages, setPages] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
-  
+
   // Modal controllers
   const [showFormModal, setShowFormModal] = React.useState(false);
   const [formMode, setFormMode] = React.useState<'create' | 'edit'>('create');
   const [editingPageId, setEditingPageId] = React.useState<string | null>(null);
-  
+
   // Custom Form states
   const [selectedPresetTemplate, setSelectedPresetTemplate] = React.useState<string>('romantic');
   const [formTitulo, setFormTitulo] = React.useState('');
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
   const [formTema, setFormTema] = React.useState<RomanceTheme>('sophisticated-dark');
   const [formSongUrl, setFormSongUrl] = React.useState('');
   const [formFotoPerfil, setFormFotoPerfil] = React.useState('/profile_avatar.png');
-  
+
   // UI notifications
   const [savingLoading, setSavingLoading] = React.useState(false);
   const [apiMessage, setApiMessage] = React.useState({ type: '', text: '' });
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
       setPages(data);
     } catch (e: any) {
       console.error(e);
-      setApiMessage({ type: 'error', text: 'Falha ao buscar páginas do Firestore.' });
+      setApiMessage({ type: 'error', text: 'Falha ao buscar páginas do banco de dados.' });
     } finally {
       setLoading(false);
     }
@@ -222,7 +222,7 @@ export default function AdminDashboardPage() {
     setFormMode('edit');
     setEditingPageId(page.id);
     const dados: LovePageConfig = page.dados;
-    
+
     setFormTitulo(dados.titulo || '');
     setFormSubtitulo(dados.subtitulo || '');
     setFormDataInicio(dados.dataInicio || '2023-01-01');
@@ -295,7 +295,7 @@ export default function AdminDashboardPage() {
           })
         });
         if (res.ok) {
-          setApiMessage({ type: 'success', text: 'Página editada com sucesso no Firestore!' });
+          setApiMessage({ type: 'success', text: 'Página editada com sucesso!' });
           setShowFormModal(false);
           await fetchPages();
         } else {
@@ -342,7 +342,7 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-neutral-900/90 border border-neutral-800/80 p-8 rounded-3xl shadow-2xl backdrop-blur-md"
@@ -401,7 +401,7 @@ export default function AdminDashboardPage() {
           <button
             onClick={() => fetchPages()}
             className="p-2 border border-neutral-800 bg-neutral-900 rounded-xl hover:bg-neutral-800 text-neutral-300 transition"
-            title="Recarregar do Firestore"
+            title="Recarregar dados"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -416,7 +416,7 @@ export default function AdminDashboardPage() {
 
       {/* Main Layout Area */}
       <main className="max-w-6xl mx-auto px-6 pt-8">
-        
+
         {/* Dynamic Alerts Banner */}
         <AnimatePresence>
           {apiMessage.text && (
@@ -424,14 +424,13 @@ export default function AdminDashboardPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className={`mb-6 p-4 rounded-xl border flex items-center justify-between gap-3 text-xs leading-normal ${
-                apiMessage.type === 'error' 
-                  ? 'bg-red-500/10 border-red-500/20 text-red-200' 
-                  : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-250'
-              }`}
+              className={`mb-6 p-4 rounded-xl border flex items-center justify-between gap-3 text-xs leading-normal ${apiMessage.type === 'error'
+                ? 'bg-red-500/10 border-red-500/20 text-red-200'
+                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-250'
+                }`}
             >
               <span>{apiMessage.text}</span>
-              <button onClick={() => setApiMessage({type: '', text: ''})} className="font-bold underline cursor-pointer text-[10px] opacity-70">
+              <button onClick={() => setApiMessage({ type: '', text: '' })} className="font-bold underline cursor-pointer text-[10px] opacity-70">
                 Fechar
               </button>
             </motion.div>
@@ -441,7 +440,7 @@ export default function AdminDashboardPage() {
         {/* Dashboard KPIs Metric bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-neutral-900/60 border border-neutral-800/60 p-5 rounded-2xl">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-400">Total de Páginas (Firestore)</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-400">Total de Páginas</span>
             <p className="text-3xl font-extrabold text-white mt-1 font-mono">{pages.length}</p>
           </div>
           <div className="bg-neutral-900/60 border border-neutral-800/60 p-5 rounded-2xl">
@@ -479,7 +478,7 @@ export default function AdminDashboardPage() {
           {loading ? (
             <div className="py-20 text-center flex flex-col items-center justify-center text-neutral-400">
               <RefreshCw className="w-8 h-8 animate-spin text-rose-500 mb-2" />
-              <p className="text-xs">Buscando registros no Firestore...</p>
+              <p className="text-xs">Buscando registros...</p>
             </div>
           ) : filteredPages.length === 0 ? (
             <div className="py-20 text-center text-neutral-400 text-xs">
@@ -500,11 +499,11 @@ export default function AdminDashboardPage() {
                 <tbody className="divide-y divide-neutral-800/50">
                   {filteredPages.map((page) => {
                     const dados: LovePageConfig = page.dados;
-                    const formattedDate = dados?.dataInicio 
-                      ? new Date(dados.dataInicio + 'T00:00:00').toLocaleDateString('pt-BR') 
+                    const formattedDate = dados?.dataInicio
+                      ? new Date(dados.dataInicio + 'T00:00:00').toLocaleDateString('pt-BR')
                       : 'Não informada';
-                    const creationDateStr = page.criado_em 
-                      ? new Date(page.criado_em).toLocaleString('pt-BR') 
+                    const creationDateStr = page.criado_em
+                      ? new Date(page.criado_em).toLocaleString('pt-BR')
                       : 'N/A';
 
                     return (
@@ -514,7 +513,7 @@ export default function AdminDashboardPage() {
                           <span className="font-bold text-white block text-sm">{dados?.titulo || 'Sem título'}</span>
                           <span className="font-mono text-[9px] text-neutral-500 block mt-0.5">{page.id}</span>
                         </td>
-                        
+
                         {/* Date info */}
                         <td className="py-4 px-5 whitespace-nowrap text-neutral-300">
                           {formattedDate}
@@ -538,11 +537,10 @@ export default function AdminDashboardPage() {
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               onClick={() => handleCopyLink(page.id)}
-                              className={`p-1.5 border border-neutral-800 rounded-lg transition ${
-                                copiedId === page.id 
-                                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                                  : 'bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800'
-                              }`}
+                              className={`p-1.5 border border-neutral-800 rounded-lg transition ${copiedId === page.id
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                : 'bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                                }`}
                               title="Copiar Link Único"
                             >
                               {copiedId === page.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -601,7 +599,7 @@ export default function AdminDashboardPage() {
               </button>
 
               <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-1.5 mb-2">
-                <Sparkles className="w-5 h-5 text-rose-500" /> 
+                <Sparkles className="w-5 h-5 text-rose-500" />
                 {formMode === 'create' ? 'Adicionar História de Amor Manualmente' : 'Editar Página de Relacionamento'}
               </h2>
               <p className="text-xs text-neutral-400 mb-6">
@@ -609,7 +607,7 @@ export default function AdminDashboardPage() {
               </p>
 
               <form onSubmit={handleSaveForm} className="space-y-4">
-                
+
                 {/* 1. Template Presets Selection for instant fill keys (Only in creation) */}
                 {formMode === 'create' && (
                   <div className="p-3 bg-neutral-950/60 border border-neutral-800 rounded-xl space-y-2">
@@ -622,11 +620,10 @@ export default function AdminDashboardPage() {
                           key={key}
                           type="button"
                           onClick={() => loadTemplatePreset(key)}
-                          className={`px-3 py-2 border rounded-lg text-left text-xs font-semibold leading-tight transition cursor-pointer ${
-                            selectedPresetTemplate === key 
-                              ? 'bg-rose-500/10 border-rose-500 text-rose-400' 
-                              : 'bg-neutral-900/50 border-neutral-800 text-neutral-400 hover:text-white'
-                          }`}
+                          className={`px-3 py-2 border rounded-lg text-left text-xs font-semibold leading-tight transition cursor-pointer ${selectedPresetTemplate === key
+                            ? 'bg-rose-500/10 border-rose-500 text-rose-400'
+                            : 'bg-neutral-900/50 border-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
                         >
                           <span className="block font-bold">{TEMPLATES[key].name}</span>
                           <span className="block text-[9px] font-normal text-neutral-500 mt-0.5">{TEMPLATES[key].description.substring(0, 32)}...</span>
@@ -738,7 +735,7 @@ export default function AdminDashboardPage() {
                     disabled={savingLoading}
                     className="py-2.5 px-6 bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs rounded-xl shadow transition duration-200 cursor-pointer flex items-center gap-1.5"
                   >
-                    {savingLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} 
+                    {savingLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     {formMode === 'create' ? 'Gravar e Ativar Link' : 'Salvar Alterações'}
                   </button>
                 </div>

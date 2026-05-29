@@ -155,7 +155,17 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
     }, 0);
   }, [config.titulo, config.subtitulo, config.dataInicio]);
 
-  // Audio Playback Engine synced safely
+  // Reset audio when track changes
+  React.useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [config.customSongUrl, activeSongIndex]);
+
+  // Audio Playback Engine
   React.useEffect(() => {
     const isSpotify = config.customSongUrl && (config.customSongUrl.includes('spotify.com') || config.customSongUrl.startsWith('spotify:'));
     
@@ -167,32 +177,24 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
       return;
     }
 
-    const currentUrl = config.customSongUrl || ROMANTIC_SONGS[activeSongIndex].url;
-    audioRef.current = new Audio(currentUrl);
-    audioRef.current.loop = true;
-    audioRef.current.volume = audioVolume;
-
     if (isPlaying) {
-      audioRef.current.play().catch(e => console.log("User interaction required for autoplay:", e));
-    }
-
-    return () => {
+      if (!audioRef.current) {
+        const currentUrl = config.customSongUrl || ROMANTIC_SONGS[activeSongIndex].url;
+        const audio = new Audio(currentUrl);
+        audio.loop = true;
+        audio.volume = audioVolume;
+        audioRef.current = audio;
+      }
+      audioRef.current.play().catch(e => {
+        console.log("User interaction required for autoplay:", e);
+        setIsPlaying(false);
+      });
+    } else {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, [config.customSongUrl, activeSongIndex, isPlaying, audioVolume]);
-
-  React.useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(e => console.log(e));
-      } else {
-        audioRef.current.pause();
       }
     }
-  }, [isPlaying]);
+  }, [config.customSongUrl, activeSongIndex, isPlaying]);
 
   React.useEffect(() => {
     if (audioRef.current) {
@@ -557,7 +559,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
           <div className="relative inline-block mb-6">
             <div className="w-36 h-36 rounded-full relative z-10 overflow-hidden border-4 border-white shadow-xl bg-pink-100/50 flex items-center justify-center">
               {config.fotoPerfil ? (
-                <img src={config.fotoPerfil} alt="Couple portrait" className="w-full h-full object-cover" />
+                <img src={config.fotoPerfil} alt="Couple portrait" className="w-full h-full object-cover" loading="lazy" />
               ) : (
                 <Heart className="w-16 h-16 text-rose-400 animate-pulse" />
               )}
@@ -1035,7 +1037,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                     <div className={`flex-1 overflow-hidden relative border rounded-sm ${
                       config.tema === 'sophisticated-dark' ? 'bg-[#251B1B] border-[#2A1E1E]' : 'bg-stone-100 border-gray-100'
                     }`}>
-                      <img src={card.fotoUrl} alt={card.legenda} className="w-full h-full object-cover select-none" />
+                      <img src={card.fotoUrl} alt={card.legenda} className="w-full h-full object-cover select-none" loading="lazy" />
                     </div>
 
                     {/* Polaroid paper margin label */}
@@ -1192,7 +1194,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                     <div className={`w-full md:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0 border-2 shadow ${
                       config.tema === 'sophisticated-dark' ? 'bg-[#251B1B] border-[#2A1E1E]' : 'bg-rose-100/30 border-white'
                     }`}>
-                      <img src={item.fotoUrl} alt={item.titulo} className="w-full h-full object-cover" />
+                      <img src={item.fotoUrl} alt={item.titulo} className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   )}
 
