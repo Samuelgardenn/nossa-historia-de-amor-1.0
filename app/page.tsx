@@ -4,7 +4,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import RomancePage, { LovePageConfig, RomanceTheme, PolaroidData, TimelineData, PostItData } from '@/components/RomancePage';
 import { Heart, Sparkles, X, Copy, Share2, Check, ExternalLink, HelpCircle } from 'lucide-react';
-import PasswordGate from '@/components/PasswordGate';
+
 
 // pre-populated romantic placeholder data matching picsum seeds for seamless beautiful first load
 const DEFAULT_ROMANTIC_STAGE: LovePageConfig = {
@@ -291,7 +291,6 @@ export default function HomeBuilderPage() {
   };
 
   return (
-    <PasswordGate>
       <div className="relative min-h-screen">
         
         {/* Heart floating particles confetti on completing */}
@@ -529,6 +528,5 @@ export default function HomeBuilderPage() {
       </AnimatePresence>
 
       </div>
-    </PasswordGate>
   );
 }
