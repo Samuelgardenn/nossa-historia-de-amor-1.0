@@ -14,7 +14,12 @@ export async function POST(req: NextRequest) {
   try {
     const { messageType, tone, partnerName, userName, memories, length, relationshipAge, subtitulo } = await req.json();
 
+    console.log("--- ROMANTIC HELPER API RECEIVED REQUEST ---");
+    console.log("GEMINI_API_KEY in process.env:", process.env.GEMINI_API_KEY ? "PRESENT (Starts with: " + process.env.GEMINI_API_KEY.substring(0, 10) + "...)" : "MISSING");
+    console.log("Request Body:", { messageType, tone, partnerName, userName, memories, length, relationshipAge, subtitulo });
+
     if (!process.env.GEMINI_API_KEY) {
+      console.log("WARNING: GEMINI_API_KEY is missing in process.env! Returning fallback.");
       return NextResponse.json(
         { text: "Meu amor, as palavras me faltam agora (AI key is missing), mas meu sentimento por você é infinito! 💕" }
       );
