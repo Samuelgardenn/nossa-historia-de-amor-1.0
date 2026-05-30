@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-let supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+let supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\/+$/, '');
 const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
 
 // No servidor, se configurada, usamos a Service Role Key para contornar políticas de RLS e atualizar o banco com segurança
