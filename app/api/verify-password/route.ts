@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin as supabase, isSupabaseServerConfigured as isSupabaseConfigured } from '@/lib/supabase-server';
 
 function generateRandomPassword(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();

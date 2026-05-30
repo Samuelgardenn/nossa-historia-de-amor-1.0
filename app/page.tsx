@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import RomancePage, { LovePageConfig, RomanceTheme, PolaroidData, TimelineData, PostItData } from '@/components/RomancePage';
-import { Heart, Sparkles, X, Copy, Share2, Check, ExternalLink, HelpCircle } from 'lucide-react';
+import { Heart, Sparkles, X } from 'lucide-react';
 
 
 // pre-populated romantic placeholder data matching picsum seeds for seamless beautiful first load
@@ -68,14 +68,7 @@ const DEFAULT_ROMANTIC_STAGE: LovePageConfig = {
   ]
 };
 
-// Hearts cascades particles interface
-interface HeartParticle {
-  id: number;
-  x: number;
-  size: number;
-  delay: number;
-  duration: number;
-}
+
 
 // Rotating informative steps for premium loader
 const LOADING_STEPS = [
@@ -94,31 +87,11 @@ export default function HomeBuilderPage() {
   const [showConfirmModal, setShowConfirmModal] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const [loadingStepText, setLoadingStepText] = React.useState('Eternizando seu amor...');
-  const [generatedPageId, setGeneratedPageId] = React.useState<string | null>(null);
-  const [copied, setCopied] = React.useState(false);
-  
-  // Confetti particles
-  const [particles, setParticles] = React.useState<HeartParticle[]>([]);
 
-  // Particle regenerator when completing
-  React.useEffect(() => {
-    if (generatedPageId) {
-      const arr = Array.from({ length: 45 }).map((_, i) => ({
-        id: i,
-        x: Math.random() * 100, // percentage of screen width
-        size: Math.random() * 16 + 12, // size between 12px and 28px
-        delay: Math.random() * 6,
-        duration: Math.random() * 3.5 + 3.5
-      }));
-      setTimeout(() => {
-        setParticles(arr);
-      }, 0);
-    } else {
-      setTimeout(() => {
-        setParticles([]);
-      }, 0);
-    }
-  }, [generatedPageId]);
+  
+
+
+
 
   // Loading text cycler
   React.useEffect(() => {
@@ -163,7 +136,7 @@ export default function HomeBuilderPage() {
     });
   };
 
-  // Trigger pagamento seguro via Stripe Checkout
+  // Redirecionar para o checkout do Mercado Pago
   const handleEternalize = async () => {
     setShowConfirmModal(false);
     setIsUploading(true);
@@ -218,7 +191,7 @@ export default function HomeBuilderPage() {
 
       setLoadingStepText('Redirecionando para pagamento seguro...');
 
-      // Criar sessão de checkout no Stripe via API
+      // Criar sessão de checkout no Mercado Pago via API
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -228,7 +201,7 @@ export default function HomeBuilderPage() {
       const data = await response.json();
       
       if (data.url) {
-        // Redirecionar para o Stripe Checkout
+        // Redirecionar para o checkout do Mercado Pago
         window.location.href = data.url;
         return; // Não desligar o loading, pois o navegador está redirecionando
       } else {
@@ -259,61 +232,10 @@ export default function HomeBuilderPage() {
     }
   };
 
-  const currentHomeOriginLink = () => {
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/p/${generatedPageId}`;
-    }
-    return `meuamor.site/p/${generatedPageId}`;
-  };
-
-  const handleCopyLink = () => {
-    const link = currentHomeOriginLink();
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  // Web Share API matching
-  const handleNativeShare = () => {
-    const link = currentHomeOriginLink();
-    if (navigator.share) {
-      navigator.share({
-        title: `Eternizamos Nosso Amor 💕`,
-        text: `Veja nossa história permanente e fotos na caixinha de recordações online!`,
-        url: link,
-      }).catch(e => console.log('Compartilhamento cancelado', e));
-    } else {
-      // Fallback: copiar link para a área de transferência
-      navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
       <div className="relative min-h-screen">
         
-        {/* Heart floating particles confetti on completing */}
-        {particles.map(p => (
-        <motion.div
-          key={p.id}
-          initial={{ y: -80, opacity: 0, x: `${p.x}vw` }}
-          animate={{ 
-            y: '110vh', 
-            opacity: [0, 1, 1, 0],
-            rotate: [0, 180, 360]
-          }}
-          transition={{
-            delay: p.delay,
-            duration: p.duration,
-            repeat: Infinity,
-            ease: 'linear'
-          }}
-          style={{ position: 'fixed', pointerEvents: 'none', zIndex: 1000 }}
-        >
-          <Heart className="text-red-500 fill-red-500" style={{ width: p.size, height: p.size }} />
-        </motion.div>
-      ))}
 
       {/* Primary Builder Stage preview */}
       <RomancePage config={config} onChange={setConfig} isReadOnly={false} />
@@ -432,98 +354,6 @@ export default function HomeBuilderPage() {
             <p className="text-xs text-rose-200/50 mt-1 max-w-xs mx-auto italic">
               &ldquo;Enviando fotos, arrumando cassete e carimbando sentimento...&rdquo;
             </p>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* SPECTACULAR SUCCESS MODAL FOR THE COUPLE */}
-      <AnimatePresence>
-        {generatedPageId && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className={`max-w-lg w-full p-8 shadow-2xl text-center border rounded-3xl relative overflow-hidden transition-all ${
-                config.tema === 'sophisticated-dark'
-                  ? 'bg-[#150F0F] border-[#2A1E1E] text-[#EAD7D1]'
-                  : 'bg-white border-pink-100 text-slate-800'
-              }`}
-            >
-              {/* background layout decor */}
-              <div className={`absolute -top-12 -left-12 w-32 h-32 rounded-full blur-2xl pointer-events-none ${
-                config.tema === 'sophisticated-dark' ? 'bg-[#D48C70]/10' : 'bg-pink-100'
-              }`} />
-              <div className={`absolute -bottom-12 -right-12 w-32 h-32 rounded-full blur-2xl pointer-events-none ${
-                config.tema === 'sophisticated-dark' ? 'bg-[#D48C70]/10' : 'bg-orange-100'
-              }`} />
-
-              <div className="text-6xl mb-4">🏆 💕 ✨</div>
-              <h2 className={`text-2xl font-bold font-sans tracking-tight mb-2 ${
-                config.tema === 'sophisticated-dark' ? 'text-white' : 'text-rose-955'
-              }`}>
-                Sua História Está Eternizada!
-              </h2>
-              <p className={`text-sm leading-relaxed max-w-sm mx-auto mb-6 ${
-                config.tema === 'sophisticated-dark' ? 'text-[#EAD7D1]/70' : 'text-slate-500'
-              }`}>
-                Parabéns! O cantinho de vocês foi criado de forma permanente na web para resistir ao tempo. Guarde este link com carinho e envie agora para seu amor!
-              </p>
-
-              {/* Unique love address bar link box */}
-              <div className={`p-4 rounded-2xl flex items-center justify-between gap-3 text-left mb-6 border ${
-                config.tema === 'sophisticated-dark'
-                  ? 'bg-[#0F0A0A] border-[#2A1E1E]'
-                  : 'bg-slate-50 border-slate-100'
-              }`}>
-                <div className="truncate flex-1">
-                  <span className={`text-[10px] uppercase font-bold block mb-0.5 ${
-                    config.tema === 'sophisticated-dark' ? 'text-[#D48C70]/60' : 'text-slate-400'
-                  }`}>Link Único Romântico</span>
-                  <span className={`text-xs font-mono font-medium block truncate select-all ${
-                    config.tema === 'sophisticated-dark' ? 'text-[#D48C70]' : 'text-rose-600'
-                  }`}>{currentHomeOriginLink()}</span>
-                </div>
-                <button
-                  onClick={handleCopyLink}
-                  className={`p-3 border rounded-xl shadow-sm transition flex-shrink-0 cursor-pointer ${
-                    config.tema === 'sophisticated-dark'
-                      ? 'bg-[#251B1B] border-[#2A1E1E] text-[#D48C70] hover:bg-[#2A1E1E]'
-                      : 'bg-white border-slate-100 text-rose-500 hover:bg-rose-50'
-                  }`}
-                  title="Copiar Link"
-                >
-                  {copied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
-                </button>
-              </div>
-
-              {/* Action tray */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                <button
-                  onClick={handleNativeShare}
-                  className={`py-3 font-bold rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer ${
-                    config.tema === 'sophisticated-dark'
-                      ? 'bg-[#D48C70] hover:bg-[#E2A68E] text-[#0F0A0A]'
-                      : 'bg-rose-500 hover:bg-rose-600 text-white'
-                  }`}
-                >
-                  <Share2 className="w-4 h-4" /> Compartilhar com Meu Amor 📲
-                </button>
-                <a
-                  href={`/p/${generatedPageId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`py-3 font-bold rounded-xl transition flex items-center justify-center gap-2 ${
-                    config.tema === 'sophisticated-dark'
-                      ? 'bg-[#251B1B] hover:bg-[#2A1E1E] text-[#D48C70] border border-[#2A1E1E]'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  <ExternalLink className="w-4 h-4" /> Visualizar Página Pronta 🔗
-                </a>
-              </div>
-
-
-            </motion.div>
           </div>
         )}
       </AnimatePresence>
