@@ -53,6 +53,12 @@ export async function POST(request: Request) {
 
     // 2. Criar sessão de checkout (preferência) no Mercado Pago
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    
+    // O Mercado Pago exige protocolo HTTPS para back_urls quando auto_return está habilitado.
+    // Convertemos http:// para https:// para desenvolvimento local em localhost.
+    const safeOrigin = origin.startsWith('http://localhost') 
+      ? origin.replace('http://', 'https://') 
+      : origin;
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
@@ -72,9 +78,9 @@ export async function POST(request: Request) {
           }
         ],
         back_urls: {
-          success: `${origin}/pagamento/sucesso`,
-          failure: `${origin}/pagamento/cancelado`,
-          pending: `${origin}/pagamento/sucesso`
+          success: `${safeOrigin}/pagamento/sucesso`,
+          failure: `${safeOrigin}/pagamento/cancelado`,
+          pending: `${safeOrigin}/pagamento/sucesso`
         },
         auto_return: 'approved',
         external_reference: pageId,
