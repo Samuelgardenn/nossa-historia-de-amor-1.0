@@ -1,32 +1,28 @@
+// lib/supabase.ts
+// Cliente Supabase com chave pública (anon). Use este arquivo em Client Components.
+// Para operações no servidor (API routes), use @/lib/supabase-server ao invés.
 import { createClient } from '@supabase/supabase-js';
 
-let supabaseUrlRaw = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/^['"]|['"]$/g, '');
-if (supabaseUrlRaw && !supabaseUrlRaw.startsWith('http://') && !supabaseUrlRaw.startsWith('https://')) {
-  supabaseUrlRaw = `https://${supabaseUrlRaw}`;
-}
-
-let supabaseUrl = '';
-if (supabaseUrlRaw) {
+function sanitizeUrl(raw: string | undefined): string {
+  let url = (raw || '').trim().replace(/^['"]|['"]$/g, '');
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  if (!url) return '';
   try {
-    const parsed = new URL(supabaseUrlRaw);
-    supabaseUrl = parsed.origin;
-  } catch (e) {
-    supabaseUrl = supabaseUrlRaw.replace(/\/+$/, '').replace(/\/rest\/v1\/?$/, '');
+    return new URL(url).origin;
+  } catch {
+    return url.replace(/\/+$/, '').replace(/\/rest\/v1\/?$/, '');
   }
 }
 
+const supabaseUrl = sanitizeUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
   .trim()
   .replace(/^['"]|['"]$/g, '');
 
-// No servidor, se configurada, usamos a Service Role Key para contornar políticas de RLS e atualizar o banco com segurança
-const isServer = typeof window === 'undefined';
-const supabaseKey = (isServer && process.env.SUPABASE_SERVICE_ROLE_KEY)
-  ? process.env.SUPABASE_SERVICE_ROLE_KEY.trim().replace(/^['"]|['"]$/g, '')
-  : supabaseAnonKey;
-
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseKey && supabaseUrl !== 'sua_url_aqui');
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
   : null;

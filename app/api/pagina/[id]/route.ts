@@ -1,5 +1,6 @@
+// app/api/pagina/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseServerConfigured } from '@/lib/supabase-server';
 
 export async function GET(
   req: NextRequest,
@@ -8,12 +9,11 @@ export async function GET(
   try {
     const { id } = await params;
 
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseServerConfigured || !supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase não está configurado.' }, { status: 500 });
     }
 
-    // Fetch directly from Supabase table 'paginas'
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('paginas')
       .select('*')
       .eq('id', id)
@@ -26,14 +26,14 @@ export async function GET(
     // Verificar status do pagamento
     if (data.dados && data.dados.pago === false) {
       return NextResponse.json(
-        { error: 'O pagamento desta página ainda está pendente de confirmação.' },
+        { error: 'O pagamento desta página ainda está pendente de confirmação.', pending: true },
         { status: 402 }
       );
     }
 
     return NextResponse.json(data);
   } catch (err: any) {
-    console.error('Error fetching page:', err);
+    console.error('[pagina/id] Erro ao buscar página:', err);
     return NextResponse.json({ error: 'Erro interno ao buscar dados da página.' }, { status: 500 });
   }
 }

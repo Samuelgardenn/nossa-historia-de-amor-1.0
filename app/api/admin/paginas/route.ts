@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseServerConfigured } from '@/lib/supabase-server';
 
 const ADMIN_PASSCODE = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || 'amor123';
 
@@ -13,12 +13,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   }
 
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isSupabaseServerConfigured || !supabaseAdmin) {
     return NextResponse.json({ error: 'Supabase não configurado.' }, { status: 500 });
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('paginas')
       .select('*')
       .order('criado_em', { ascending: false });
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(data || []);
   } catch (err: any) {
-    console.error('Error fetching pages:', err);
+    console.error('[admin/paginas] Erro ao buscar páginas:', err);
     return NextResponse.json({ error: 'Erro ao buscar páginas.' }, { status: 500 });
   }
 }
@@ -37,8 +37,8 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   }
 
-  if (!isSupabaseConfigured || !supabase) {
-    return NextResponse.json({ error: 'Supabase não configurado.' }, { status: 550 });
+  if (!isSupabaseServerConfigured || !supabaseAdmin) {
+    return NextResponse.json({ error: 'Supabase não configurado.' }, { status: 500 });
   }
 
   try {
@@ -49,7 +49,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'ID ausente.' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('paginas')
       .delete()
       .eq('id', id);
@@ -58,7 +58,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Página deletada com sucesso.' });
   } catch (err: any) {
-    console.error('Error deleting page:', err);
+    console.error('[admin/paginas] Erro ao deletar página:', err);
     return NextResponse.json({ error: err.message || 'Erro ao deletar página.' }, { status: 500 });
   }
 }
@@ -68,7 +68,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   }
 
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isSupabaseServerConfigured || !supabaseAdmin) {
     return NextResponse.json({ error: 'Supabase não configurado.' }, { status: 500 });
   }
 
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Dados ou ID ausentes.' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('paginas')
       .update({ dados })
       .eq('id', id);
@@ -88,7 +88,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Página atualizada com sucesso.' });
   } catch (err: any) {
-    console.error('Error updating page:', err);
+    console.error('[admin/paginas] Erro ao atualizar página:', err);
     return NextResponse.json({ error: err.message || 'Erro ao atualizar página.' }, { status: 500 });
   }
 }

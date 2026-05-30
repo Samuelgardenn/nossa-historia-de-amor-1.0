@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseServerConfigured } from '@/lib/supabase-server';
 
 const rateLimitCache = new Map<string, number[]>();
 
@@ -41,7 +41,7 @@ function sanitizeData(data: any): any {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseServerConfigured || !supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase não configurado.' }, { status: 400 });
     }
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     const pageId = crypto.randomUUID();
 
-    const { error } = await supabase.from('paginas').insert([{
+    const { error } = await supabaseAdmin.from('paginas').insert([{
       id: pageId,
       dados: sanitizedBody,
       criado_em: new Date().toISOString(),
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: pageId, success: true });
   } catch (err: any) {
-    console.error('Error creating romantic page:', err);
+    console.error('[criar-pagina] Erro:', err);
     return NextResponse.json(
       { error: err.message || 'Erro ao criar página.' },
       { status: 500 }
