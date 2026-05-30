@@ -327,9 +327,7 @@ export default function HomeBuilderPage() {
           className={`flex items-center gap-2 px-8 py-4 text-white text-base font-bold rounded-full shadow-lg cursor-pointer bg-gradient-to-r transition-all animate-bounce ${currentThemeHexColor()}`}
         >
           <Sparkles className="w-5 h-5 animate-pulse" />
-          <span>💳 Eternizar: </span>
-          <span className="line-through text-white/65 text-sm">R$ 29,90</span>
-          <span className="font-extrabold text-amber-300 ml-1">R$ 19,90</span>
+          <span>Criar Sua Página!</span>
         </motion.button>
       </div>
 
