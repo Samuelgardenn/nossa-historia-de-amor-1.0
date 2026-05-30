@@ -126,6 +126,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
   const [aiTone, setAiTone] = React.useState('apaixonado');
   const [aiMemories, setAiMemories] = React.useState('');
   const [aiError, setAiError] = React.useState('');
+  const [writeMode, setWriteMode] = React.useState<'manual' | 'ai'>('manual');
 
   // Cropper States
   const [cropperState, setCropperState] = React.useState<{
@@ -1249,27 +1250,180 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                 ? 'bg-[#150F0F]/90 border-[#2A1E1E] text-[#EAD7D1]' 
                 : 'bg-white/80 border-pink-100 text-slate-800'
             }`}>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-3 border-slate-100/40 dark:border-stone-800/40">
                 <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${
                   config.tema === 'sophisticated-dark' ? 'text-[#D48C70]' : 'text-rose-600'
                 }`}>
                   ✏️ Fixar Nova Cartinha de Amor ou Poema
                 </h4>
+
+                <div className={`p-0.5 rounded-xl flex ${
+                  config.tema === 'sophisticated-dark' ? 'bg-[#251B1B] border border-[#2A1E1E]' : 'bg-slate-100/80 border'
+                }`}>
+                  <button
+                    onClick={() => setWriteMode('manual')}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
+                      writeMode === 'manual'
+                        ? config.tema === 'sophisticated-dark'
+                          ? 'bg-[#D48C70] text-[#0F0A0A]'
+                          : 'bg-rose-500 text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                    }`}
+                  >
+                    Manual
+                  </button>
+                  <button
+                    onClick={() => setWriteMode('ai')}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer flex items-center gap-1 ${
+                      writeMode === 'ai'
+                        ? config.tema === 'sophisticated-dark'
+                          ? 'bg-[#D48C70] text-[#0F0A0A]'
+                          : 'bg-rose-500 text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Cupido de IA ✨
+                  </button>
+                </div>
               </div>
 
-              {/* Standard letters writing */}
-              <div className="space-y-3">
-                <textarea
-                  rows={3}
-                  className={`w-full px-3 py-1.5 text-xs border rounded-lg ${
-                    config.tema === 'sophisticated-dark' 
-                      ? 'bg-[#251B1B] border-[#2A1E1E] text-white focus:outline-[#D48C70]' 
-                      : 'bg-white border-gray-200 focus:outline-rose-400'
-                  }`}
-                  placeholder="Escreva sua dedicatória sincera..."
-                  value={newPostItText}
-                  onChange={(e) => setNewPostItText(e.target.value)}
-                />
+              {/* standard or AI letters writing inputs */}
+              <div className="space-y-4">
+                {writeMode === 'ai' && (
+                  <div className={`p-4 rounded-xl border space-y-4 transition-all ${
+                    config.tema === 'sophisticated-dark' ? 'bg-[#251B1B]/40 border-[#2A1E1E]' : 'bg-pink-50/20 border-pink-100/50'
+                  }`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase opacity-80 mb-1.5">Estilo da Mensagem</label>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {[
+                            { id: 'poema', label: '📜 Poema' },
+                            { id: 'carta de amor', label: '✉️ Carta' },
+                            { id: 'recado fofo', label: '💕 Recado' },
+                            { id: 'promessa', label: '💍 Promessa' },
+                          ].map(type => (
+                            <button
+                              key={type.id}
+                              onClick={() => setAiSelectedType(type.id)}
+                              className={`py-1.5 px-2 text-[10px] font-semibold border rounded-lg transition-all cursor-pointer ${
+                                aiSelectedType === type.id
+                                  ? config.tema === 'sophisticated-dark'
+                                    ? 'bg-[#D48C70] border-[#D48C70] text-[#0F0A0A]'
+                                    : 'bg-rose-500 border-rose-500 text-white'
+                                  : config.tema === 'sophisticated-dark'
+                                    ? 'bg-[#150F0F] border-[#2A1E1E] text-[#EAD7D1] hover:bg-[#251B1B]'
+                                    : 'bg-white border-gray-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              {type.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase opacity-80 mb-1.5">Tom e Sintonia</label>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {[
+                            { id: 'apaixonado', label: '😍 Apaixonado' },
+                            { id: 'emocionante', label: '🥺 Emocionante' },
+                            { id: 'divertido', label: '😂 Divertido' },
+                            { id: 'poetico', label: '🌸 Poético' },
+                          ].map(tone => (
+                            <button
+                              key={tone.id}
+                              onClick={() => setAiTone(tone.id)}
+                              className={`py-1.5 px-2 text-[10px] font-semibold border rounded-lg transition-all cursor-pointer ${
+                                aiTone === tone.id
+                                  ? config.tema === 'sophisticated-dark'
+                                    ? 'bg-[#D48C70] border-[#D48C70] text-[#0F0A0A]'
+                                    : 'bg-rose-500 border-rose-500 text-white'
+                                  : config.tema === 'sophisticated-dark'
+                                    ? 'bg-[#150F0F] border-[#2A1E1E] text-[#EAD7D1] hover:bg-[#251B1B]'
+                                    : 'bg-white border-gray-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              {tone.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase opacity-80 mb-1">
+                        Memórias, Detalhes ou Piadas Internas (Opcional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={aiMemories}
+                        onChange={(e) => setAiMemories(e.target.value)}
+                        placeholder="Ex: Como nos conhecemos no parque, a mania de rir sem motivo, apelidos fofos..."
+                        className={`w-full px-3 py-1.5 text-xs border rounded-lg focus:outline-none ${
+                          config.tema === 'sophisticated-dark'
+                            ? 'bg-[#150F0F] border-[#2A1E1E] text-white focus:border-[#D48C70]'
+                            : 'bg-white border-gray-200 focus:border-rose-300'
+                        }`}
+                      />
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        await handleGenerateAiMessage();
+                        setWriteMode('manual');
+                      }}
+                      disabled={isGeneratingMessage}
+                      className={`w-full py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow transition flex items-center justify-center gap-2 ${
+                        isGeneratingMessage
+                          ? 'bg-rose-400 cursor-not-allowed opacity-80'
+                          : config.tema === 'sophisticated-dark'
+                            ? 'bg-gradient-to-r from-[#D48C70] to-[#E2A68E] text-[#0F0A0A] hover:brightness-110 shadow-[0_0_12px_rgba(212,140,112,0.2)]'
+                            : 'bg-gradient-to-r from-rose-500 to-pink-500 text-white hover:opacity-95'
+                      }`}
+                    >
+                      {isGeneratingMessage ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>O Cupido está escrevendo... 💖</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 animate-pulse text-white" />
+                          <span>Escrever Declaração Perfeita com IA</span>
+                        </>
+                      )}
+                    </button>
+
+                    {aiError && (
+                      <p className="text-[10px] text-red-500 font-semibold text-center mt-1">{aiError}</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  {writeMode === 'ai' && (
+                    <div className="text-[9px] font-bold text-slate-400 dark:text-[#EAD7D1]/50 uppercase tracking-wider">
+                      📝 Mensagem Gerada (Você pode ajustar abaixo):
+                    </div>
+                  )}
+                  <textarea
+                    rows={3}
+                    className={`w-full px-3 py-1.5 text-xs border rounded-lg ${
+                      config.tema === 'sophisticated-dark' 
+                        ? 'bg-[#251B1B] border-[#2A1E1E] text-white focus:outline-[#D48C70]' 
+                        : 'bg-white border-gray-200 focus:outline-rose-400'
+                    }`}
+                    placeholder={
+                      writeMode === 'ai'
+                        ? "Escreva memórias e gere acima para o Cupido preencher este campo automaticamente!"
+                        : "Escreva sua dedicatória sincera..."
+                    }
+                    value={newPostItText}
+                    onChange={(e) => setNewPostItText(e.target.value)}
+                  />
+                </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -1279,7 +1433,7 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
                         <button
                           key={color}
                           onClick={() => setNewPostItColor(color)}
-                          className={`w-6 h-6 rounded-md border transition-all ${
+                          className={`w-6 h-6 rounded-md border transition-all cursor-pointer ${
                             newPostItColor === color ? 'ring-2 ring-rose-300 scale-105' : 'opacity-70'
                           }`}
                           style={{
