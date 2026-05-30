@@ -12,7 +12,7 @@ const ai = new GoogleGenAI({
 
 export async function POST(req: NextRequest) {
   try {
-    const { messageType, tone, partnerName, userName, memories, length } = await req.json();
+    const { messageType, tone, partnerName, userName, memories, length, relationshipAge, subtitulo } = await req.json();
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
@@ -24,25 +24,37 @@ export async function POST(req: NextRequest) {
     const toneWord = tone || 'apaixonado e romântico';
     const partner = partnerName || 'meu amor';
     const user = userName || 'seu par';
-    const memoryContext = memories ? `Inclua com carinho estas memórias ou detalhes especiais: "${memories}"` : '';
     const lengthLimit = length || 'curto (um ou dois parágrafos)';
 
-    const prompt = `Escreva uma mensagem de amor comovente em português. 
-Tipo de mensagem: ${typeWord}
-Tom e estilo: ${toneWord}
-Destinatário (parceiro/a): ${partner}
-Remetente (usuário): ${user}
-Tamanho: ${lengthLimit}
+    const prompt = `Você deve escrever uma declaração de amor personalizada e comovente em português.
 
-${memoryContext}
+DADOS DO CASAL:
+- Remetente (quem envia): ${user}
+- Destinatário (quem recebe): ${partner}
+- Tempo de Relacionamento: ${relationshipAge || 'não especificado'}
+- Subtítulo da página do casal: "${subtitulo || ''}"
 
-Instruções adicionais: Evite clichês artificiais de IA. Escreva de forma fluida, genuína, calorosa e comovente, como um ser humano verdadeiramente apaixonado escreveria. Não inclua placeholders como "[Seu Nome]" na resposta final; use os dados passados ou finalize de forma poética.`;
+CONFIGURAÇÕES DA MENSAGEM:
+- Tipo de Texto: ${typeWord} (ex: poema, carta de amor, recado fofo, promessa)
+- Tom/Estilo: ${toneWord} (ex: apaixonado, emocionante, divertido, poético)
+- Tamanho: ${lengthLimit}
+
+MEMÓRIAS E DETALHES COMPARTILHADOS (USE E VALORIZE MUITO ESTES PONTOS):
+"${memories || 'Use a criatividade para fazer uma declaração linda baseada nos nomes do casal e na sua conexão.'}"
+
+INSTRUÇÕES CRÍTICAS DE ESTILO:
+1. Escreva como um ser humano real, sensível e genuinamente apaixonado. Evite clichês chatos de robôs (ex: fórmulas prontas, frases frias).
+2. Tente incorporar de forma natural e fofa os nomes, o tempo de relacionamento e principalmente as memórias ou piadas internas fornecidas.
+3. Não use placeholders como "[Seu Nome]", "[Nome do Parceiro]" ou "[Data]". O texto deve vir 100% pronto e polido para leitura.
+4. Se o tom for divertido, misture piadas leves/fofas com sentimentos reais. Se for poema, cuide da sonoridade e ritmo.
+5. Escreva diretamente a mensagem final gerada, sem introduções ou explicações do tipo "Aqui está a mensagem".`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
-        temperature: 1.0,
+        systemInstruction: "Você é um Cupido de Inteligência Artificial com extrema sensibilidade emocional, empatia e talento literário. Seu objetivo é ajudar casais a expressarem seus sentimentos mais profundos através de mensagens personalizadas, tocantes e autênticas. Adapte o vocabulário e a profundidade conforme as memórias e estilo solicitados, escrevendo de forma orgânica e fluida.",
+        temperature: 0.9,
       }
     });
 

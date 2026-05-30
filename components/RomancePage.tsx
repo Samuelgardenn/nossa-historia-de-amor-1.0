@@ -479,7 +479,9 @@ export default function RomancePage({ config, onChange, isReadOnly = false }: Ro
           tone: aiTone,
           partnerName: editedTitle.split('&')[1]?.trim() || '',
           userName: editedTitle.split('&')[0]?.trim() || '',
-          memories: aiMemories
+          memories: aiMemories,
+          relationshipAge: `${timeDiffString.anos > 0 ? `${timeDiffString.anos} ano(s), ` : ''}${timeDiffString.meses} mês(es) e ${timeDiffString.dias} dia(s)`,
+          subtitulo: config.subtitulo || ''
         })
       });
 
