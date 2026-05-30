@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     if (dbError) {
       console.error('Erro ao salvar página pendente:', dbError);
       return NextResponse.json(
-        { error: 'Erro ao preparar sua página. Tente novamente.' },
+        { error: `Erro ao preparar sua página: ${dbError.message} (${dbError.code || 'sem código'})` },
         { status: 500 }
       );
     }
