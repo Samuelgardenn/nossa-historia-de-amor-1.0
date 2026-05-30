@@ -1,15 +1,17 @@
 // app/api/confirmar-pagamento/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
     const { paymentId, pageId } = await request.json();
+
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase não configurado.' },
+        { status: 500 }
+      );
+    }
 
     if (!paymentId || !pageId) {
       return NextResponse.json(

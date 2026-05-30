@@ -1,16 +1,18 @@
 // app/api/create-checkout-session/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { pageConfig } = body;
+
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase não configurado.' },
+        { status: 500 }
+      );
+    }
 
     if (!pageConfig) {
       return NextResponse.json(
