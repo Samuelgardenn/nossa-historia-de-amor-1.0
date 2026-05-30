@@ -5,3 +5,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local-only Admin Dashboard
+app/admin/
+app/api/admin/

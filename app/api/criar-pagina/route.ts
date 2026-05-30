@@ -68,7 +68,15 @@ export async function POST(req: NextRequest) {
     sanitizedBody.pago = true;
     sanitizedBody.status = 'ativo';
 
-    const pageId = crypto.randomUUID();
+    let pageId = rawBody.customId || crypto.randomUUID();
+    
+    // Validate if it is a customId
+    if (rawBody.customId) {
+      const isValidSlug = /^[a-zA-Z0-9-_]+$/.test(rawBody.customId);
+      if (!isValidSlug) {
+        return NextResponse.json({ error: 'O link personalizado deve conter apenas letras, números, hífens ou underlines.' }, { status: 400 });
+      }
+    }
 
     const { error } = await supabaseAdmin.from('paginas').insert([{
       id: pageId,
@@ -77,7 +85,12 @@ export async function POST(req: NextRequest) {
       created_by: 'public'
     }]);
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === '23505') { // Duplicate key error
+        return NextResponse.json({ error: 'Este link personalizado já está sendo usado por outro cliente.' }, { status: 409 });
+      }
+      throw error;
+    }
 
     return NextResponse.json({ id: pageId, success: true });
   } catch (err: any) {
