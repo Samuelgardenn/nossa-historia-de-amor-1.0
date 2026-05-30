@@ -60,31 +60,38 @@ export async function POST(request: Request) {
       ? origin.replace('http://', 'https://') 
       : origin;
 
+    const preferencePayload: any = {
+      items: [
+        {
+          title: '💕 Página de Amor Permanente',
+          description: 'Sua história de amor eternizada em uma página exclusiva e permanente na web.',
+          quantity: 1,
+          unit_price: 19.90,
+          currency_id: 'BRL',
+          picture_url: 'https://img.icons8.com/emoji/96/red-heart.png'
+        }
+      ],
+      back_urls: {
+        success: `${safeOrigin}/pagamento/sucesso`,
+        failure: `${safeOrigin}/pagamento/cancelado`,
+        pending: `${safeOrigin}/pagamento/sucesso`
+      },
+      auto_return: 'approved',
+      external_reference: pageId,
+    };
+
+    // Mercado Pago exige que a URL de webhooks seja pública e utilize HTTPS
+    if (origin.startsWith('https://') && !origin.includes('localhost')) {
+      preferencePayload.notification_url = `${origin}/api/webhooks/mercadopago`;
+    }
+
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        items: [
-          {
-            title: '💕 Página de Amor Permanente',
-            description: 'Sua história de amor eternizada em uma página exclusiva e permanente na web.',
-            quantity: 1,
-            unit_price: 19.90,
-            currency_id: 'BRL',
-            picture_url: 'https://img.icons8.com/emoji/96/red-heart.png'
-          }
-        ],
-        back_urls: {
-          success: `${safeOrigin}/pagamento/sucesso`,
-          failure: `${safeOrigin}/pagamento/cancelado`,
-          pending: `${safeOrigin}/pagamento/sucesso`
-        },
-        auto_return: 'approved',
-        external_reference: pageId,
-      })
+      body: JSON.stringify(preferencePayload)
     });
 
     if (!mpResponse.ok) {

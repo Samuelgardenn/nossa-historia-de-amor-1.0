@@ -54,3 +54,6 @@ ON public.paginas FOR SELECT TO public USING (true);
 
 CREATE POLICY "Permitir insercao anonima paginas" 
 ON public.paginas FOR INSERT TO public WITH CHECK (true);
+
+CREATE POLICY "Permitir atualizacao anonima paginas" 
+ON public.paginas FOR UPDATE TO public USING (true) WITH CHECK (true);
