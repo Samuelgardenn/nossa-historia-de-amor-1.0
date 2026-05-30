@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     // 2. Criar sessão de checkout (preferência) no Mercado Pago
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-    const mpResponse = await fetch('https://api.mercadopago.com/v1/preferences', {
+    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
